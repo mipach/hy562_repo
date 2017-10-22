@@ -41,8 +41,12 @@ public class WordCount extends Configured implements Tool {
     FileInputFormat.addInputPath(job, new Path(args[0]));
    // FileOutputFormat.setOutputPath(job, new Path(args[1]));
     FileOutputFormat.setOutputPath(job,new Path("tempOut"));
+    job.setNumReduceTasks(50);
     job.setMapperClass(Map_1.class);
     job.setReducerClass(Reduce_1.class);
+    //job.setCombinerClass(Reduce_1.class);
+    //getConf().set("mapreduce.map.output.compress", "true");
+    //getConf().set("mapreduce.map.output.compress.codec", "org.apache.hadoop.io.compress.SnappyCodec");
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(IntWritable.class);
     job.waitForCompletion(true);

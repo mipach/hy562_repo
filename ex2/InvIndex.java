@@ -7,6 +7,7 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
+import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
@@ -33,6 +34,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import java.lang.StringBuilder;
 
 public class InvIndex extends Configured implements Tool {
+	
+	public enum Count {
+		F1,F2,F3,F4,F5,F6
+	};
 
 	private static final Logger LOG = Logger.getLogger(InvIndex.class);
 	private static int INDEX = 0;	
@@ -53,7 +58,30 @@ public class InvIndex extends Configured implements Tool {
 		job.setReducerClass(Reduce_1.class);
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
-		return job.waitForCompletion(true) ? 0 : 1;
+		
+		//long count1 = job.getCounters().findCounter(Count.F1).getValue();
+		//System.out.println("File 100.txt" + ":" + count1);
+
+		job.waitForCompletion(true);
+		
+		try (PrintWriter pw = new PrintWriter("Counters.txt")) {
+		long count1 = job.getCounters().findCounter(Count.F1).getValue();
+		long count2 = job.getCounters().findCounter(Count.F2).getValue();
+		long count3 = job.getCounters().findCounter(Count.F3).getValue();
+		long count4 = job.getCounters().findCounter(Count.F4).getValue();
+		long count5 = job.getCounters().findCounter(Count.F5).getValue();
+		long count6 = job.getCounters().findCounter(Count.F6).getValue();
+
+                pw.println( count1);
+		pw.println( count2);
+		pw.println( count3);
+		pw.println( count4);
+		pw.println( count5);
+		pw.println( count6);
+		}
+	
+		return 0;
+	
 	}
 	
 	public static class Map_1 extends Mapper<LongWritable, Text, Text, Text> {
@@ -97,8 +125,17 @@ public class InvIndex extends Configured implements Tool {
 		public void reduce(Text word, Iterable<Text> files,Context context) throws IOException, InterruptedException {
 			StringBuilder sb = new StringBuilder();
 			for(Text file : files) {
-				if(!(sb.toString().contains(file.toString())))
+				if(!(sb.toString().contains(file.toString()))) {
+					switch (file.toString()) {
+					case "100.txt": context.getCounter(Count.F1).increment(1); break;
+					case "pg1120.txt": context.getCounter(Count.F2).increment(1); break;
+					case "pg1513.txt": context.getCounter(Count.F3).increment(1); break;
+					case "pg2253.txt": context.getCounter(Count.F4).increment(1); break;
+					case "pg31100.txt": context.getCounter(Count.F5).increment(1); break;
+					case "pg3200.txt": context.getCounter(Count.F6).increment(1); break;
+					}
 					sb.append(file.toString() + " ");
+				}
 			}
 			context.write(new Text(++INDEX+" "+ word.toString()),new Text(sb.toString()));					
 		}
