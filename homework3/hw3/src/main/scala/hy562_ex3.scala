@@ -85,6 +85,7 @@ object Homework {
 
 		val toCheck = reduced_rdd.map(x => x.split(" ").toSet)
 		val cand = sc.parallelize(candidate)
+		val mapCheck = toCheck.collect
 		val map_phase2 = cand.mapPartitions { x => {
 		      var x2 = 0.0
       		      val tmp = cand.map(y => (y,0.0)).collect
@@ -93,14 +94,14 @@ object Homework {
                       for(st <- new_set) {     
                       	mapCheck.map{x1 => if(st._1.diff(x1).isEmpty == true) new_set(st._1) += 1}
       		      }
+		     new_set.iterator
     		    }
-    		    new_set.iterator
 		}
 		val reduced_values = map_phase2.collect
 		
 
 		// set the support by counting the elements in toCheck and then 
-		val total_count = toCheck.size
+		val total_count = toCheck.count
 
 		//val items_with_support = new_set.map(x => (x._1, (x._2/total_count)*100))
 		val items_with_support = reduced_values.map(x => (x._1,(x._2/total_count)*100))
