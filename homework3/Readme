@@ -1,4 +1,5 @@
 The hy562_ex3.scala file contains the commands in order to run the excersize from the spark-shell (you have to include the AprioriAlgorithm).
+This commands are NOT for the parallel varsion of apriori nor SON. In order to run the parallel version use the file in hw3 folder.
 
 The hw3 folder contains a complete implementation of the algorithm ready to build using sbt (sbt package) and then submit the jar to the spark using spark-submit.
 
