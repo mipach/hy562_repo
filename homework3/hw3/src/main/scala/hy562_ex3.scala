@@ -67,26 +67,23 @@ class AprioriAlgorithm(inputFile: Array[String]) {
 object Homework {
 	def main(args: Array[String]) {
 		val sc = new SparkContext(new SparkConf().setAppName("Homework 3"))
+
+		val start = System.currentTimeMillis
 		val rdd = sc.textFile("/home/mipach/accidents.dat")
 
 		//reduce the file so my computer won't crash
 		val reduced_rdd = rdd.map(x => x.split(" ")).map(x => x.take(7).mkString(" "))
-
-		val accidents = reduced_rdd.collect
-
-		//initialize the Apriori and run it
-
-		//stage 1 map and reduce
-		val alg = new AprioriAlgorithm(accidents)
-
-		//spark splits the chunks based on the workers automatically and does the sum
-		alg.runApriori(0.35,0.60)
-
-		val candidate = alg.toRetItems.keySet
-
+	
+		val mapped = reduced_rdd.mapPartitions{ x => {
+			val t = new AprioriAlgorithm(x.toArray)
+			t.runApriori(0.35,0.60)
+			t.toRetItems.iterator }
+		}
+		val collected = mapped.collect
+		val candidate = collected.map(x => x._1).distinct
 		//stage 2 map
 
-		val toCheck = accidents.map(x => x.split(" ").toSet)
+		val toCheck = reduced_rdd.map(x => x.split(" ").toSet)
 
 		var x2 = 0.0
 		var new_set = collection.mutable.Map(candidate.toSeq: _*)
@@ -106,8 +103,12 @@ object Homework {
 
 		val items_with_support = new_set.map(x => (x._1, (x._2/total_count)*100))
 
-		val support = 50.0
+		val support = 35.0
 
 		val toRet = items_with_support.filter(x => x._2 >= support)
+		println(toRet)
+		val end = System.currentTimeMillis
+		val passed = end - start
+		println("Time to compute:" + passed )
 	}
 }
