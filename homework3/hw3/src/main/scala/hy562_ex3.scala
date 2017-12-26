@@ -84,25 +84,26 @@ object Homework {
 		//stage 2 map
 
 		val toCheck = reduced_rdd.map(x => x.split(" ").toSet)
-
-		var x2 = 0.0
-		var new_set = collection.mutable.Map(candidate.toSeq: _*)
-		new_set = new_set.map(x => (x._1,x2))
-
-		//increment the new_set(Set(value)) by one each time we find the items in the initial dataset (toCheck)
-
-		//phase2 map
-		for(st <- new_set) {
- 			toCheck.map{ x => if(st._1.diff(x).isEmpty == true) new_set(st._1) += 1}
-
+		val cand = sc.parallelize(candidate)
+		val map_phase2 = cand.mapPartitions { x => {
+		      var x2 = 0.0
+      		      val tmp = cand.map(y => (y,0.0)).collect
+      	 	      var new_set:scala.collection.mutable.Map[Set[String],Double] = collection.mutable.Map(tmp.toSeq: _*)
+                      new_set = new_set.map(y => (y._1,x2))
+                      for(st <- new_set) {     
+                      	mapCheck.map{x1 => if(st._1.diff(x1).isEmpty == true) new_set(st._1) += 1}
+      		      }
+    		    }
+    		    new_set.iterator
 		}
+		val reduced_values = map_phase2.collect
+		
 
-		//filter phase 2 
 		// set the support by counting the elements in toCheck and then 
 		val total_count = toCheck.size
 
-		val items_with_support = new_set.map(x => (x._1, (x._2/total_count)*100))
-
+		//val items_with_support = new_set.map(x => (x._1, (x._2/total_count)*100))
+		val items_with_support = reduced_values.map(x => (x._1,(x._2/total_count)*100))
 		val support = 35.0
 
 		val toRet = items_with_support.filter(x => x._2 >= support)
